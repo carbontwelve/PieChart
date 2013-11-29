@@ -22,12 +22,17 @@ class PieChartGD extends PieChart {
     public function draw($aa = 4) {
         $this->canvas = imageCreateTrueColor($this->width, $this->height);
 
+        if ($this->transparent === true)
+        {
+            imagecolortransparent($this->canvas, $this->_convertColor($this->backgroundColor));
+        }
+
         // Set anti-aliasing for the pie chart.
         imageAntiAlias($this->canvas, true);
 
         imageFilledRectangle($this->canvas, 0, 0, $this->width, $this->height,
                 $this->_convertColor($this->backgroundColor));
-        
+
         $total = 0;
         $sliceStart = -90;  // Start at 12 o'clock.
 
@@ -44,10 +49,10 @@ class PieChartGD extends PieChart {
         $pieDiameter = round(
                 min($this->width - $legendWidth, $this->height - $titleHeight) * 0.85
         );
-        
+
         foreach ($this->slices as $slice)
             $total += $slice['value'];
-        
+
         // If anti-aliasing is enabled, we supersample the pie to work around
         // the fact that GD does not provide anti-aliasing natively.
         if ($aa > 0) {
@@ -56,14 +61,14 @@ class PieChartGD extends PieChart {
             $superSample = imageCreateTrueColor($ssDiameter, $ssDiameter);
             imageFilledRectangle($superSample, 0, 0, $ssDiameter, $ssDiameter,
                 $this->_convertColor($this->backgroundColor));
-            
+
             foreach ($this->slices as $slice) {
                 $sliceWidth = 360 * $slice['value'] / $total;
 
                 // Skip slices that are too small to draw / be visible.
                 if ($sliceWidth == 0)
                     continue;
-                
+
                 $sliceEnd = $sliceStart + $sliceWidth;
 
                 imageFilledArc(
@@ -81,7 +86,7 @@ class PieChartGD extends PieChart {
                 // Move along to the next slice.
                 $sliceStart = $sliceEnd;
             }
-            
+
             imageCopyResampled(
                 $this->canvas, $superSample,
                 $pieCentreX - $pieDiameter / 2, $pieCentreY - $pieDiameter / 2,
@@ -89,7 +94,7 @@ class PieChartGD extends PieChart {
                 $pieDiameter, $pieDiameter,
                 $ssDiameter, $ssDiameter
             );
-            
+
             imageDestroy($superSample);
         }
         else {
@@ -120,7 +125,7 @@ class PieChartGD extends PieChart {
             }
         }
     }
-    
+
     protected function _output($method, $format, $filename) {
         switch ($format) {
             case parent::FORMAT_GIF:
@@ -131,7 +136,7 @@ class PieChartGD extends PieChart {
                     return imageGIF($this->canvas, $filename);
                 }
                 break;
-                
+
             case parent::FORMAT_JPEG:
                 if ($method == parent::OUTPUT_INLINE || $method == parent::OUTPUT_DOWNLOAD) {
                     return imageJPEG($this->canvas, NULL, $this->quality);
@@ -140,7 +145,7 @@ class PieChartGD extends PieChart {
                     return imageJPEG($this->canvas, $filename, $this->quality);
                 }
                 break;
-            
+
             case parent::FORMAT_PNG:
                 if ($method == parent::OUTPUT_INLINE || $method == parent::OUTPUT_DOWNLOAD) {
                     return imagePNG($this->canvas);
@@ -150,7 +155,7 @@ class PieChartGD extends PieChart {
                 }
                 break;
         }
-        
+
         return false;  // The output method or format is missing!
     }
 
@@ -183,7 +188,7 @@ class PieChartGD extends PieChart {
         $legendWidth = $squareSize + $labelPadding + $this->_maxLabelWidth($legendFontSize);
         $legendHeight = $sliceCount * ($squareSize + $squarePadding) - $squarePadding;
 
-        // If the legend and its padding occupy too much space, we will not draw it.		
+        // If the legend and its padding occupy too much space, we will not draw it.
         if ($legendWidth + $legendPadding * 2 > $this->width / 2)  // Too wide.
             return 0;
 
@@ -231,7 +236,7 @@ class PieChartGD extends PieChart {
         $labelHeight = abs($labelBBox[7] - $labelBBox[1]);
 
         $labelY = $y + $squareSize / 2 - $labelHeight / 2;
-        
+
         imageFilledRectangle(
            $this->canvas, $x, $y, $x + $squareSize, $y + $squareSize, $this->_convertColor($color)
         );
@@ -268,7 +273,7 @@ class PieChartGD extends PieChart {
     }
 
     /**
-     * Draws and returns the height of the title and its padding (in pixels). If no title is 
+     * Draws and returns the height of the title and its padding (in pixels). If no title is
      * specified, then nothing is drawn and 0 is returned.
      * @var float x location
      * @var float y location
@@ -288,7 +293,7 @@ class PieChartGD extends PieChart {
             $titleBBox = imageTTFBBox($titleSize, 0, $this->titleFont, $this->title);
             $titleWidth = $titleBBox[2] - $titleBBox[0];
 
-            // If we can fit the title in, with 5% padding on each side, then we can 
+            // If we can fit the title in, with 5% padding on each side, then we can
             // draw it.
             if ($titleWidth <= ($this->width * 0.9))
                 break;
@@ -296,7 +301,7 @@ class PieChartGD extends PieChart {
             $titleSize -= 0.5; // Try a smaller font size.
         } while ($titleSize >= $minTitleSize);
 
-        // If the title is simply too long to be drawn legibly, then we will simply not 
+        // If the title is simply too long to be drawn legibly, then we will simply not
         // draw it.
         if ($titleSize < $minTitleSize)
             return 0;
@@ -311,24 +316,24 @@ class PieChartGD extends PieChart {
         $y = $titleTopPadding;
 
         imageTtfText(
-            $this->canvas, $titleSize, 
+            $this->canvas, $titleSize,
             0,
             $x + abs($titleBBox[0]),  // Account for left overhang.
             $y + abs($titleBBox[7]),  // Account for the area above the baseline.
-            $titleColor, 
-            $this->titleFont, 
+            $titleColor,
+            $this->titleFont,
             $this->title
         );
 
         return $titleHeight + $titleTopPadding;
     }
-    
+
     /**
      * A convenience function for converting PieChartColor objects to the format
      * that GD requires.
      */
     private function _convertColor(PieChartColor $color) {
-        // Interestingly, GD uses the ARGB format internally, so 
+        // Interestingly, GD uses the ARGB format internally, so
         // PieChartColor::toInt() would actually work for everything but GIFs...
         return imageColorAllocate($this->canvas, $color->r, $color->g, $color->b);
     }
