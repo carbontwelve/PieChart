@@ -4,7 +4,7 @@ namespace SamChristy\PieChart;
 /**
  * Abstract class that is designed to be extended for drawing pie charts with
  * different graphics libraries. Use PieChartGD or PieChartImagick to actually
- * draw your charts. 
+ * draw your charts.
  * @author    Sam Christy <sam_christy@hotmail.co.uk>
  * @licence   GNU GPL v3.0 <http://www.gnu.org/licenses/gpl-3.0.html>
  * @copyright © Sam Christy 2013
@@ -18,7 +18,7 @@ abstract class PieChart {
     const OUTPUT_DOWNLOAD = 1;
     const OUTPUT_INLINE = 2;
     const OUTPUT_SAVE = 3;
-    
+
     protected $slices;
     protected $width;
     protected $height;
@@ -30,8 +30,9 @@ abstract class PieChart {
     protected $backgroundColor;
     protected $canvas;
     protected $quality;
+    protected $transparent;
 
-    /** 
+    /**
      * Constructs the PieChart.
      * @param int $width The width of the chart, in pixels.
      * @param int $height The chart's height, in pixels.
@@ -40,16 +41,17 @@ abstract class PieChart {
      * @param string|int|array [$backgroundColor] The color for the background.
      */
     public function __construct($width = 0, $height = 0, $title = '', $textColor = 0x222222,
-            $backgroundColor = 0xffffff) {
+            $backgroundColor = 0xffffff, $transparent = false) {
         $this->width  = $width;
         $this->height = $height;
         $this->title  = $title;
+        $this->transparent = $transparent;
         $this->hasLegend = true;
         $this->slices = array();
         $this->quality = 100;
         $this->textColor = new PieChartColor($textColor);
         $this->backgroundColor = new PieChartColor($backgroundColor);
-        
+
         // TODO search for specified font, then search for font locally, so that
         //      fonts can be easily saved in  'src/SamChristy/PieChart/fonts/'.
         // Drop back to a default font, if not found?
@@ -70,20 +72,20 @@ abstract class PieChart {
      */
     public function setTitle($title, $titleFont = NULL) {
         $this->title = $title;
-        
+
         if($titleFont)
             $this->titleFont = $titleFont;
     }
 
     /**
      * Add or remove the chart's legend (it is displayed default).
-     * @param bool $displayLegend Specify false to remove the legend or true to 
+     * @param bool $displayLegend Specify false to remove the legend or true to
      * add one.
      * @param string [$legendFont] The name of the font for the legend's text.
      */
     public function setLegend($displayLegend, $legendFont = NULL) {
         $this->hasLegend = $displayLegend;
-        
+
         if($legendFont)
             $this->legendFont = $legendFont;
     }
@@ -95,7 +97,7 @@ abstract class PieChart {
     public function setOutputQuality($quality) {
         $this->quality = $quality;
     }
-    
+
     /**
      * Adds a new slice to the pie chart.
      * @param string $name The name of the slice (used for legend label).
@@ -121,7 +123,7 @@ abstract class PieChart {
      * Draws the chart so that it is ready for output.
      */
     public function draw() {}
-    
+
     /**
      * For child classes to override, so that the output functions work.
      * @param int $method
@@ -129,7 +131,7 @@ abstract class PieChart {
      * @param string $filename
      */
     protected function _output($method, $format, $filename) {}
-    
+
     /**
      * Echos the chart as a GIF and instructs the browser to display it inline.
      * @param string [$filename] The filename for the picture.
@@ -138,10 +140,10 @@ abstract class PieChart {
     public function outputGIF($filename = 'pie-chart.gif') {
         header('Content-Type: image/gif');
         header("Content-Disposition: inline; filename=\"$filename\"");
-        
+
         return $this->_output(self::OUTPUT_INLINE, self::FORMAT_GIF, $filename);
     }
-    
+
     /**
      * Echos the chart as a JPEG and instructs the browser to display it inline.
      * @param string [$filename] The filename for the picture.
@@ -150,10 +152,10 @@ abstract class PieChart {
     public function outputJPEG($filename = 'pie-chart.jpg') {
         header('Content-Type: image/jpeg');
         header("Content-Disposition: inline; filename=\"$filename\"");
-        
+
         return $this->_output(self::OUTPUT_INLINE, self::FORMAT_JPEG, $filename);
     }
-    
+
     /**
      * Echos the chart as a PNG and instructs the browser to display it inline.
      * @param string [$filename] The filename for the picture.
@@ -162,7 +164,7 @@ abstract class PieChart {
     public function outputPNG($filename = 'pie-chart.png') {
         header('Content-Type: image/png');
         header("Content-Disposition: inline; filename=\"$filename\"");
-        
+
         return $this->_output(self::OUTPUT_INLINE, self::FORMAT_PNG, $filename);
     }
 
@@ -177,10 +179,10 @@ abstract class PieChart {
         header("Cache-Control: must-revalidate, post-check=0, pre-check=0");
         header('Content-Type: application/octet-stream');
         header('Content-Disposition: attachment; filename="'.$filename.'"');
-        
+
         return $this->_output(self::OUTPUT_INLINE, self::FORMAT_GIF, $filename);
     }
-    
+
     /**
      * Echos the chart as a JPEG and instructs the browser to force the user to
      * save it.
@@ -192,10 +194,10 @@ abstract class PieChart {
         header("Cache-Control: must-revalidate, post-check=0, pre-check=0");
         header('Content-Type: application/octet-stream');
         header('Content-Disposition: attachment; filename="'.$filename.'"');
-        
+
         return $this->_output(self::OUTPUT_INLINE, self::FORMAT_JPEG, $filename);
     }
-    
+
     /**
      * Echos the chart as a PNG and instructs the browser to force the user to
      * save it.
@@ -207,7 +209,7 @@ abstract class PieChart {
         header("Cache-Control: must-revalidate, post-check=0, pre-check=0");
         header('Content-Type: application/octet-stream');
         header('Content-Disposition: attachment; filename="'.$filename.'"');
-        
+
         return $this->_output(self::OUTPUT_DOWNLOAD, self::FORMAT_PNG, $filename);
     }
 
@@ -219,7 +221,7 @@ abstract class PieChart {
     public function saveGIF($filename) {
         return $this->_output(self::OUTPUT_SAVE, self::FORMAT_GIF, $filename);
     }
-    
+
     /**
      * Saves the chart as a JPEG, in the specified location.
      * @param string $filename
@@ -228,7 +230,7 @@ abstract class PieChart {
     public function saveJPEG($filename) {
         return $this->_output(self::OUTPUT_SAVE, self::FORMAT_JPEG, $filename);
     }
-    
+
     /**
      * Saves the chart as a PNG, in the specified location.
      * @param string $filename
